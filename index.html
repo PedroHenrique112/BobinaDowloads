@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Bobina — baixe vídeos de qualquer rede</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EDF1F5;
+    --bg-panel:#FFFFFF;
+    --ink:#101820;
+    --ink-soft:#4B5563;
+    --line:#D6DEE6;
+    --accent:#FF4B3E;
+    --accent-ink:#FFFFFF;
+    --ok:#3E7C59;
+    --ok-bg:#E4F1E9;
+    --warn:#B4530A;
+    --warn-bg:#FCEEE0;
+    --reel:#101820;
+    --radius:14px;
+    --display:'Fraunces', serif;
+    --body:'IBM Plex Sans', sans-serif;
+    --mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  .wrap{max-width:760px;margin:0 auto;padding:48px 24px 80px;}
+
+  /* ---------- HERO ---------- */
+  header.hero{margin-bottom:36px;}
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .rec-dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 0 0 rgba(255,75,62,.5);
+    animation:pulse 2.2s infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(255,75,62,.45);}
+    70%{box-shadow:0 0 0 9px rgba(255,75,62,0);}
+    100%{box-shadow:0 0 0 0 rgba(255,75,62,0);}
+  }
+  h1{
+    font-family:var(--display);
+    font-weight:600;
+    font-size:clamp(34px, 6vw, 52px);
+    line-height:1.04;
+    letter-spacing:-0.01em;
+    margin:0 0 14px;
+  }
+  h1 em{
+    font-style:italic;
+    color:var(--accent);
+  }
+  .sub{
+    color:var(--ink-soft);
+    font-size:16px;
+    line-height:1.55;
+    max-width:52ch;
+    margin:0;
+  }
+
+  /* ---------- INPUT CARD ---------- */
+  .card{
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px;
+    margin-top:28px;
+  }
+  .input-row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  input[type=text]{
+    flex:1 1 260px;
+    font-family:var(--mono);
+    font-size:14px;
+    padding:14px 16px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:#FBFCFD;
+    color:var(--ink);
+    outline:none;
+    transition:border-color .15s ease;
+  }
+  input[type=text]:focus{border-color:var(--ink);}
+  input[type=text]::placeholder{color:#93A0AC;}
+  button.primary{
+    font-family:var(--body);
+    font-weight:600;
+    font-size:14.5px;
+    padding:14px 22px;
+    border-radius:10px;
+    border:none;
+    background:var(--ink);
+    color:#fff;
+    cursor:pointer;
+    transition:transform .12s ease, background .15s ease;
+  }
+  button.primary:hover{background:#000;}
+  button.primary:active{transform:scale(.97);}
+  button.primary:disabled{background:#B7C0C9;cursor:not-allowed;}
+  button.primary:focus-visible, input:focus-visible, .platform-chip:focus-visible{
+    outline:2px solid var(--accent); outline-offset:2px;
+  }
+
+  .platforms{
+    display:flex;
+    gap:8px;
+    margin-top:14px;
+    flex-wrap:wrap;
+  }
+  .platform-chip{
+    font-family:var(--mono);
+    font-size:11.5px;
+    letter-spacing:.03em;
+    padding:6px 10px;
+    border-radius:100px;
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+    background:#F7F9FB;
+    cursor:default;
+    transition:transform .18s cubic-bezier(.2,.8,.3,1.4), box-shadow .18s ease, background .18s ease, color .18s ease, border-color .18s ease, opacity .18s ease;
+  }
+  .platform-chip.is-detected{
+    background:var(--ink);
+    color:#fff;
+    border-color:var(--ink);
+    transform:translateY(-3px) scale(1.06);
+    box-shadow:0 6px 0 0 rgba(16,24,32,.18), 0 10px 16px -6px rgba(16,24,32,.35);
+  }
+  .platforms.has-detection .platform-chip:not(.is-detected){
+    opacity:.4;
+  }
+
+  /* ---------- TERMINAL / REEL STATUS ---------- */
+  .terminal{
+    display:none;
+    margin-top:20px;
+    background:var(--reel);
+    border-radius:var(--radius);
+    padding:20px 22px;
+    color:#CFE8D8;
+    font-family:var(--mono);
+    font-size:13px;
+    position:relative;
+    overflow:hidden;
+  }
+  .terminal.active{display:block;}
+  .reels{
+    position:absolute;
+    top:16px; right:18px;
+    display:flex;
+    gap:10px;
+  }
+  .reel-icon{
+    width:26px;height:26px;
+    border-radius:50%;
+    border:2.5px solid #3D4A44;
+    border-top-color:#7FE3A8;
+    animation:spin 0.9s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .log-line{
+    opacity:0;
+    animation:fadeIn .3s ease forwards;
+    margin-bottom:6px;
+    padding-left:18px;
+    position:relative;
+  }
+  .log-line::before{
+    content:"›";
+    position:absolute;left:0;top:0;
+    color:#7FE3A8;
+  }
+  @keyframes fadeIn{to{opacity:1;}}
+
+  /* ---------- RESULT ---------- */
+  .result{
+    display:none;
+    margin-top:20px;
+  }
+  .result.active{display:block;}
+  .result-card{
+    display:flex;
+    gap:16px;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px;
+    align-items:center;
+  }
+  .thumb{
+    width:88px;height:88px;
+    border-radius:10px;
+    background:linear-gradient(135deg,#20242C,#3A404B);
+    flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    color:#7FE3A8;
+    font-size:26px;
+  }
+  .result-meta{flex:1;min-width:0;}
+  .result-title{
+    font-weight:600;
+    font-size:15px;
+    margin:0 0 4px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .result-sub{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-soft);
+    margin:0;
+  }
+  .quality-row{
+    display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;
+  }
+  select{
+    font-family:var(--mono);
+    font-size:13px;
+    padding:10px 12px;
+    border-radius:8px;
+    border:1.5px solid var(--line);
+    background:#FBFCFD;
+  }
+  a.download-btn{
+    font-family:var(--body);
+    font-weight:600;
+    font-size:14px;
+    padding:10px 18px;
+    border-radius:8px;
+    background:var(--accent);
+    color:var(--accent-ink);
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+
+  .error-box{
+    display:none;
+    margin-top:16px;
+    background:var(--warn-bg);
+    color:var(--warn);
+    border-radius:10px;
+    padding:14px 16px;
+    font-size:14px;
+  }
+  .error-box.active{display:block;}
+
+  /* ---------- HISTORY (reel canister log) ---------- */
+  .history{margin-top:44px;}
+  .history h2{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin:0 0 14px;
+  }
+  .history-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 0;
+    border-top:1px solid var(--line);
+    font-size:14px;
+  }
+  .history-item:last-child{border-bottom:1px solid var(--line);}
+  .history-item .plat{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+  .empty-state{
+    color:var(--ink-soft);
+    font-size:13.5px;
+    padding:18px 0;
+    border-top:1px solid var(--line);
+  }
+
+  footer{
+    margin-top:60px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    line-height:1.6;
+  }
+  footer code{
+    background:#E3E9EE;
+    padding:1px 6px;
+    border-radius:4px;
+    font-family:var(--mono);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow"><span class="rec-dot"></span> transferência de mídia</div>
+    <h1>Cole o link.<br>A <em>bobina</em> faz o resto.</h1>
+    <p class="sub">Baixe vídeos do TikTok, Instagram, YouTube, Facebook e Twitter/X direto para o seu aparelho. Um link, um clique, um arquivo seu.</p>
+  </header>
+
+  <div class="card">
+    <div class="input-row">
+      <input id="urlInput" type="text" placeholder="Cole aqui o link do vídeo…" autocomplete="off" spellcheck="false">
+      <button class="primary" id="goBtn">Buscar vídeo</button>
+    </div>
+    <div class="platforms" id="platformsRow">
+      <span class="platform-chip" data-platform="tiktok">TIKTOK</span>
+      <span class="platform-chip" data-platform="instagram">INSTAGRAM</span>
+      <span class="platform-chip" data-platform="youtube">YOUTUBE</span>
+      <span class="platform-chip" data-platform="facebook">FACEBOOK</span>
+      <span class="platform-chip" data-platform="twitter">TWITTER / X</span>
+    </div>
+    <div class="input-row" style="margin-top:10px;">
+      <select id="qualitySelectPre" style="flex:0 0 auto;">
+        <option value="1080p">1080p</option>
+        <option value="720p" selected>720p</option>
+        <option value="480p">480p</option>
+        <option value="360p">360p</option>
+      </select>
+      <span style="font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);align-self:center;">qualidade do arquivo a baixar</span>
+    </div>
+
+    <div class="terminal" id="terminal">
+      <div class="reels"><div class="reel-icon"></div><div class="reel-icon"></div></div>
+      <div id="logLines"></div>
+    </div>
+
+    <div class="error-box" id="errorBox"></div>
+
+    <div class="result" id="result">
+      <div class="result-card">
+        <div class="thumb">▶</div>
+        <div class="result-meta">
+          <p class="result-title" id="resTitle">—</p>
+          <p class="result-sub" id="resSub">—</p>
+        </div>
+      </div>
+      <div class="quality-row">
+        <select id="qualitySelect"></select>
+        <a class="download-btn" id="downloadBtn" href="#" download>⭳ Baixar vídeo</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="history">
+    <h2>Últimos downloads desta sessão</h2>
+    <div id="historyList"></div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================================
+   CONFIGURAÇÃO DA API — integrado com a SocialKit (api.socialkit.dev)
+   -------------------------------------------------------------------------
+   Formato de requisição e resposta conferidos na documentação oficial da
+   SocialKit em julho/2026 para TikTok, Instagram e YouTube.
+
+   Facebook e Twitter/X: o Playground da SocialKit mostra essas plataformas
+   com um endpoint "Download", mas eu não tinha documentação pública para
+   confirmar a URL exata nem o formato da resposta. Segui o mesmo padrão
+   dos outros três (/facebook/download e /twitter/download) por dedução —
+   teste no Playground deles (aba "URL" ou "cURL", selecione a plataforma e
+   o endpoint "Download", clique em Execute) e me mostre o resultado pra eu
+   confirmar se bate exatamente com o que está aqui, ou ajustar se não bater.
+
+   Como pegar sua chave:
+   1. Crie uma conta grátis em https://www.socialkit.dev (20 créditos/mês)
+   2. No painel, clique em "Access Keys" no menu lateral
+   3. Copie o access key gerado e cole abaixo em ACCESS_KEY
+
+   IMPORTANTE — SEGURANÇA:
+   Chamar a API direto do navegador (como este arquivo faz) expõe sua chave
+   para qualquer visitante que abrir o "Inspecionar elemento" do navegador.
+   Isso é aceitável para testar e para uso pessoal, mas antes de divulgar o
+   site para outras pessoas, mova essa chamada para um backend seu (uma
+   função serverless, por exemplo) e troque USE_PROXY para true abaixo.
+   ========================================================================= */
+const API_CONFIG = {
+  USE_PROXY: false,                 // true = chamar seu próprio backend (recomendado antes de publicar)
+  PROXY_ENDPOINT: "/api/download",  // sua rota de backend, se USE_PROXY = true
+
+  ACCESS_KEY: "hlDVxUlHEYSLgN",
+  ENDPOINTS: {
+    tiktok:    "https://api.socialkit.dev/tiktok/download",
+    instagram: "https://api.socialkit.dev/instagram/download",
+    youtube:   "https://api.socialkit.dev/youtube/download",
+    facebook:  "https://api.socialkit.dev/facebook/download",
+    twitter:   "https://api.socialkit.dev/twitter/download",
+  },
+};
+
+const DEMO_MODE = API_CONFIG.ACCESS_KEY === "COLE_SUA_CHAVE_SOCIALKIT_AQUI" && !API_CONFIG.USE_PROXY;
+
+const urlInput = document.getElementById('urlInput');
+const goBtn = document.getElementById('goBtn');
+const terminal = document.getElementById('terminal');
+const logLines = document.getElementById('logLines');
+const resultBox = document.getElementById('result');
+const errorBox = document.getElementById('errorBox');
+const resTitle = document.getElementById('resTitle');
+const resSub = document.getElementById('resSub');
+const qualitySelect = document.getElementById('qualitySelect');
+const downloadBtn = document.getElementById('downloadBtn');
+const historyList = document.getElementById('historyList');
+const platformsRow = document.getElementById('platformsRow');
+
+let history = [];
+
+function detectPlatform(url){
+  const u = url.toLowerCase();
+  if(u.includes('tiktok.com')) return 'tiktok';
+  if(u.includes('instagram.com')) return 'instagram';
+  if(u.includes('youtube.com') || u.includes('youtu.be')) return 'youtube';
+  if(u.includes('facebook.com') || u.includes('fb.watch')) return 'facebook';
+  if(u.includes('twitter.com') || u.includes('x.com')) return 'twitter';
+  return null;
+}
+
+const PLATFORM_LABELS = { tiktok:'TikTok', instagram:'Instagram', youtube:'YouTube', facebook:'Facebook', twitter:'Twitter/X' };
+
+function highlightDetectedPlatform(){
+  const platform = detectPlatform(urlInput.value.trim());
+  const chips = platformsRow.querySelectorAll('.platform-chip');
+  chips.forEach(chip=>{
+    chip.classList.toggle('is-detected', platform !== null && chip.dataset.platform === platform);
+  });
+  platformsRow.classList.toggle('has-detection', platform !== null);
+  return platform;
+}
+
+urlInput.addEventListener('input', highlightDetectedPlatform);
+
+function log(text, delay){
+  return new Promise(resolve=>{
+    setTimeout(()=>{
+      const el = document.createElement('div');
+      el.className = 'log-line';
+      el.textContent = text;
+      logLines.appendChild(el);
+      resolve();
+    }, delay);
+  });
+}
+
+function resetUI(){
+  terminal.classList.remove('active');
+  logLines.innerHTML = '';
+  resultBox.classList.remove('active');
+  errorBox.classList.remove('active');
+  errorBox.textContent = '';
+}
+
+function showError(msg){
+  errorBox.textContent = msg;
+  errorBox.classList.add('active');
+  terminal.classList.remove('active');
+}
+
+/* -------------------------------------------------------------------------
+   parseApiResponse: adaptado ao formato real de resposta da SocialKit
+   para os endpoints /tiktok/download, /instagram/download e /youtube/download.
+   Resposta documentada:
+   { success: true, data: { title, duration, durationSeconds, thumbnail,
+     downloadUrl, fileSize, fileSizeMB, format, quality, expiresIn } }
+   ------------------------------------------------------------------------- */
+function parseApiResponse(raw, platform){
+  if(!raw || raw.success === false){
+    throw new Error(raw?.message || 'A API não retornou um vídeo válido para esse link.');
+  }
+  const d = raw.data || {};
+  return {
+    title: d.title || `Vídeo do ${PLATFORM_LABELS[platform]}`,
+    platform: PLATFORM_LABELS[platform],
+    thumbnail: d.thumbnail || null,
+    sizeLabel: d.fileSizeMB || null,
+    expiresIn: d.expiresIn || null,
+    formats: [{ label: `${d.quality || 'padrão'} · ${d.format || 'mp4'}`, url: d.downloadUrl }]
+  };
+}
+
+async function fetchFromRealApi(link, platform, quality){
+  const target = API_CONFIG.USE_PROXY ? API_CONFIG.PROXY_ENDPOINT : API_CONFIG.ENDPOINTS[platform];
+  if(!target){
+    throw new Error('Essa plataforma ainda não tem endpoint configurado.');
+  }
+
+  const body = { url: link, format: 'mp4', quality };
+  if(!API_CONFIG.USE_PROXY){
+    body.access_key = API_CONFIG.ACCESS_KEY;
+  }
+
+  const response = await fetch(target, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  if(!response.ok){
+    const errBody = await response.json().catch(()=>({}));
+    throw new Error(errBody.message || `A API respondeu com erro (status ${response.status}).`);
+  }
+  const data = await response.json();
+  return parseApiResponse(data, platform);
+}
+
+function fakeDemoResult(platform){
+  return {
+    title: `Vídeo de exemplo — ${PLATFORM_LABELS[platform]}`,
+    platform: PLATFORM_LABELS[platform],
+    thumbnail: null,
+    sizeLabel: '4.97 MB (demo)',
+    formats: [{label:'720p · mp4 — demo', url:'#'}]
+  };
+}
+
+function renderResult(data){
+  resTitle.textContent = data.title;
+  resSub.textContent = data.sizeLabel ? `${data.platform} · ${data.sizeLabel}` : data.platform;
+  qualitySelect.innerHTML = '';
+  data.formats.forEach((f)=>{
+    const opt = document.createElement('option');
+    opt.value = f.url;
+    opt.textContent = f.label;
+    qualitySelect.appendChild(opt);
+  });
+  downloadBtn.href = data.formats[0].url;
+  resultBox.classList.add('active');
+
+  history.unshift({ title:data.title, platform:data.platform });
+  renderHistory();
+}
+
+qualitySelect?.addEventListener('change', (e)=>{
+  downloadBtn.href = e.target.value;
+});
+
+function renderHistory(){
+  if(history.length === 0){
+    historyList.innerHTML = '<div class="empty-state">Nada por aqui ainda — o primeiro download desta sessão aparece nesta lista.</div>';
+    return;
+  }
+  historyList.innerHTML = '';
+  history.slice(0,8).forEach(h=>{
+    const row = document.createElement('div');
+    row.className = 'history-item';
+    row.innerHTML = `<span>${h.title}</span><span class="plat">${h.platform.toUpperCase()}</span>`;
+    historyList.appendChild(row);
+  });
+}
+
+async function handleSubmit(){
+  const link = urlInput.value.trim();
+  const quality = document.getElementById('qualitySelectPre').value;
+  resetUI();
+
+  if(!link){
+    showError('Cole um link de vídeo antes de continuar.');
+    return;
+  }
+  const platform = detectPlatform(link);
+  if(!platform){
+    showError('Não reconheci essa plataforma. Aceitamos TikTok, Instagram, YouTube, Facebook e Twitter/X.');
+    return;
+  }
+
+  goBtn.disabled = true;
+  terminal.classList.add('active');
+
+  await log(`Plataforma identificada: ${PLATFORM_LABELS[platform]}`, 100);
+  await log('Conectando ao serviço de conversão…', 500);
+  await log(`Buscando arquivo em ${quality}…`, 900);
+
+  try{
+    let data;
+    if(DEMO_MODE){
+      await log('Modo demonstração — nenhuma chave de API configurada.', 1300);
+      data = fakeDemoResult(platform);
+    } else {
+      data = await fetchFromRealApi(link, platform, quality);
+    }
+    await log('Pronto.', DEMO_MODE ? 1700 : 300);
+    renderResult(data);
+  } catch(err){
+    showError(`Não consegui baixar esse vídeo agora. ${err.message || ''}`.trim());
+  } finally {
+    terminal.classList.remove('active');
+    goBtn.disabled = false;
+  }
+}
+
+goBtn.addEventListener('click', handleSubmit);
+urlInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') handleSubmit(); });
+
+renderHistory();
+</script>
+</body>
+</html>
